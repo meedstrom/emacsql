@@ -127,7 +127,7 @@
   "Encode VECTOR into a SQL vector scalar."
   (cl-typecase vector
     (null   (emacsql-error "Empty SQL vector expression"))
-    (list   (mapconcat #'emacsql-escape-list vector ", "))
+    (list   (emacsql-escape-list vector))
     (vector (concat "(" (mapconcat #'emacsql-escape-scalar vector ", ") ")"))
     (otherwise (emacsql-error "Invalid vector %S" vector))))
 
