@@ -127,9 +127,39 @@
   "Encode VECTOR into a SQL vector scalar."
   (cl-typecase vector
     (null   (emacsql-error "Empty SQL vector expression"))
-    (list   (mapconcat #'emacsql-escape-vector vector ", "))
+    (list   (mapconcat #'emacsql-escape-list vector ", "))
     (vector (concat "(" (mapconcat #'emacsql-escape-scalar vector ", ") ")"))
     (otherwise (emacsql-error "Invalid vector %S" vector))))
+
+(defun emacsql-escape-list (list-of-vecs)
+  "Return LIST-OF-VECS as a string for SQLite to consume."
+  (with-temp-buffer
+    (let ((print-level nil)
+          (print-length nil)
+          (print-escape-newlines t)
+          (print-escape-control-characters t)
+          vector beg)
+      (while (setq vector (pop list-of-vecs))
+        (insert "(")
+        (cl-loop for scalar across vector do
+                 (cond ((null scalar)
+                        (insert "NULL"))
+                       ((numberp scalar)
+                        (insert (number-to-string scalar)))
+                       ((progn (insert "'")
+                               (setq beg (point))
+                               (prin1 scalar (current-buffer))
+                               (goto-char beg)
+                               (while (search-forward "'" nil t) (insert "'"))
+                               (goto-char (point-max))
+                               (insert "'"))))
+                 (insert ", "))
+        (unless (= 2 (point)) ;; In case above loop was a no-op
+          (delete-char -2))
+        (insert "), "))
+      (unless (bobp) ; In case input was nil
+        (delete-char -2)))
+    (buffer-string)))
 
 (defun emacsql-escape-format (thing)
   "Escape THING for use as a `format' spec."
