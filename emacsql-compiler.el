@@ -63,12 +63,11 @@
 (defun emacsql-quote-scalar (string)
   "Single-quote (scalar) STRING for use in a SQL expression."
   (with-work-buffer
-    (insert string)
-    (goto-char (point-min))
-    (while (re-search-forward "'" nil t)
-      (replace-match "''"))
-    (goto-char (point-min))
     (insert "'")
+    (insert string)
+    (goto-char 2)
+    (while (search-forward "'" nil t)
+      (insert "'"))
     (goto-char (point-max))
     (insert "'")
     (buffer-string)))
